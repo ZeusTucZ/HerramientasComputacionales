@@ -3,70 +3,43 @@ import numpy as np
 import pytesseract
 import matplotlib.pyplot as plt
 
-# Cargar imagen
 img = cv2.imread('ishihara.jpeg')
 
-# Pre-suavizar para estabilizar color
 img_blur = cv2.GaussianBlur(img, (5,5), 0)
 
-# Convertir a RGB
-img_hsv = cv2.cvtColor(img_blur, cv2.COLOR_BGR2HSV)
-
-# Convertir a gris
-img_gray = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY)
-
-# Deinir rango
-lower_num = np.array([25, 40, 40], dtype=np.uint8)
-upper_num = np.array([100, 255, 255], dtype=np.uint8)
-
-# Crear máscara
-mask = cv2.inRange(img_hsv, lower_num, upper_num)
-
-# Aplicar máscara
-result = cv2.bitwise_and(img_hsv, img_hsv, mask=mask)
-img_gray_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2RGB)
-final_result = cv2.addWeighted(img_gray_rgb, 1, result, 1, 0)
-
-# Mostrar resultados
-
-plt.figure(figsize=(10, 10))
-
-plt.subplot(1, 3, 1)
-plt.title("Filtrada")
-plt.imshow(final_result)
+plt.figure(figsize=(6,6))
+plt.title("Imagen con Gaussian Blur")
+plt.imshow(img_blur, cmap="gray")
 plt.axis("off")
-
-plt.subplot(1, 3, 2)
-plt.title("Escala de grises")
-plt.imshow(img_gray, cmap="gray")
-plt.axis("off")
-
-plt.subplot(1, 3, 3)
-plt.title("Imágen con máscara")
-plt.imshow(result)
-plt.axis("off")
-
 plt.show()
 
-# --- 1) Pre-suavizado ---
-img_blur = cv2.GaussianBlur(img, (5,5), 0)
+
 hsv = cv2.cvtColor(img_blur, cv2.COLOR_BGR2HSV)
 
-# --- 2) Máscara compuesta (verde ∪ cian) con S/V relajados ---
 mask_g = cv2.inRange(hsv, np.array([25, 25, 25], np.uint8),
                           np.array([75,255,255], np.uint8))
 mask_c = cv2.inRange(hsv, np.array([76, 15, 15], np.uint8),
                           np.array([105,255,255], np.uint8))
 mask_num = cv2.bitwise_or(mask_g, mask_c)
 
-# Limpieza leve + cierre moderado (no redondear en exceso)
+plt.figure(figsize=(6,6))
+plt.title("Máscara compuesta (verde ∪ cian)")
+plt.imshow(mask_num, cmap="gray")
+plt.axis("off")
+plt.show()
+
 k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
 k7 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
 mask_num = cv2.morphologyEx(mask_num, cv2.MORPH_OPEN,  k3, iterations=1)
 solid    = cv2.morphologyEx(mask_num, cv2.MORPH_CLOSE, k7, iterations=2)
 solid    = cv2.dilate(solid, np.ones((3,3), np.uint8), iterations=1)
 
-# --- 3) Agrupa SIEMPRE en 2 dígitos (fusiona comps por centro-X en 2 grupos) ---
+plt.figure(figsize=(6,6))
+plt.title("Después de suavizado")
+plt.imshow(solid, cmap="gray")
+plt.axis("off")
+plt.show()
+
 num_labels, labels_cc, stats, centroids = cv2.connectedComponentsWithStats(solid, 8)
 idxs = [i for i in range(1, num_labels) if stats[i, cv2.CC_STAT_AREA] > int(0.0015*solid.size)]
 
@@ -97,7 +70,6 @@ else:
         m2[ys[~sel], xs_pix[~sel]] = 255
         masks_digits = [m1, m2]
 
-# --- 4) Refuerzo específico del 7: SOLO banda superior horizontal del dígito izquierdo ---
 def boost_top_bar(mask_bin, top_ratio=0.30, k=9):
     ys, xs = np.where(mask_bin>0)
     if xs.size==0: return mask_bin
@@ -118,7 +90,6 @@ masks_digits[0] = boost_top_bar(masks_digits[0], top_ratio=0.30, k=11)  # marca 
 masks_digits[1] = cv2.morphologyEx(masks_digits[1], cv2.MORPH_CLOSE,
                                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5)), 1)
 
-# --- 5) OCR por dígito (PSM 10, numérico) ---
 def ocr_digit(m):
     if (m>0).sum()==0: return ""
     ys, xs = np.where(m>0)
@@ -132,4 +103,4 @@ def ocr_digit(m):
 
 left  = ocr_digit(masks_digits[0])
 right = ocr_digit(masks_digits[1])
-print("Número detectado (por dígito):", f"{left}{right}")
+print("Número detectado:", f"{left}{right}")
