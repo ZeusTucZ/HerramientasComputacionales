@@ -27,8 +27,6 @@ result = cv2.bitwise_and(img_hsv, img_hsv, mask=mask)
 img_gray_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2RGB)
 final_result = cv2.addWeighted(img_gray_rgb, 1, result, 1, 0)
 
-# Gaussian blur
-
 # Mostrar resultados
 
 plt.figure(figsize=(10, 10))
@@ -44,7 +42,7 @@ plt.imshow(img_gray, cmap="gray")
 plt.axis("off")
 
 plt.subplot(1, 3, 3)
-plt.title("Solo Amarillo")
+plt.title("Imágen con máscara")
 plt.imshow(result)
 plt.axis("off")
 
