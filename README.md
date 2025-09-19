@@ -1,4 +1,7 @@
-# HerramientasComputacionales
-Repositorio local para semana 6
+# Daltonismo
 
-Modificacion para poder hacerle un commit al repositorio
+## ¿Qué es?
+Alteración en la percepción visual que dificulta distinguir o ver ciertos colores, principalmente el rojo y el verde
+
+## Datos relevantes
+Se estima que entre 300 y 350 millones de personas en el mundo tienen daltonismo, aunque la cifra exacta es difícil de determinar debido a la falta de diagnósticos en muchas personas. Esta condición es más frecuente en hombres, afectando aproximadamente al 8% de la población masculina en comparación con el 0.5% de las mujeres.
